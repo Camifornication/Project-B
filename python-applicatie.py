@@ -11,4 +11,16 @@ def gui():
 
     root.mainloop()
 
-gui()
+# gui()
+
+def sorted():
+    game_name_list = []
+    with open('steam.json', 'r') as json_file:
+        data = json.load(json_file)
+        for game_name in data:
+            game_name_list.append(game_name['name'])
+        game_name_list.sort()
+        for element in game_name_list:
+            print(element)
+
+sorted()
