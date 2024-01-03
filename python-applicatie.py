@@ -1,11 +1,13 @@
 import json
 import requests
 from tkinter import *
+import datetime
 
 jort_ID = 76561198424424214
 camiel_ID = 76561199075949807
 abi_ID = 76561199499642445
 joeri_ID = 76561198811411788
+viggo_ID = 76561198901321655
 
 steam_api_key = "61D1D964724B68FC9F340D584CD500E3"
 user_id = "76561198424424214"
@@ -56,20 +58,43 @@ def get_personaname(steamid):
     personaname = data['response']['players'][0]['personaname']
     return personaname
 
-def last_logoff_friendlist(steamid):   #get each friend of friendlist with last logoff
-    response = requests.get(f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={steam_api_key}&steamid={steamid}&relationship=friend")
+def unix_to_normal(unix_date):
+    datetime_object = datetime.datetime.fromtimestamp(unix_date)
+
+    date_format = "%d-%m-%Y %H:%M"
+    return datetime_object.strftime(date_format)
+
+def last_logoff_friendlist(steamid):  # get each friend of friendlist with last logoff
+    global friendinfo_lst
+    friendinfo_lst = []
+
+    response = requests.get(
+        f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={steam_api_key}&steamid={steamid}&relationship=friend")
     data = response.json()
     steamid_list = []
     for friend in data['friendslist']['friends']:
         steamid = friend['steamid']
         steamid_list.append(steamid)
     for steamid in steamid_list:
-        response = requests.get(f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={steam_api_key}&steamids={steamid}")
+        response = requests.get(
+            f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={steam_api_key}&steamids={steamid}")
         data = response.json()
         personaname = data['response']['players'][0]['personaname']
-        lastlogoff = data['response']['players'][0]['lastlogoff']
-        print(f"User: {personaname}, Last log-off: {lastlogoff}")
 
+        if 'lastlogoff' in data['response']['players'][0]:
+            lastlogoff = data['response']['players'][0]['lastlogoff']
+            lastlogoff = unix_to_normal(lastlogoff)
+        else:
+            lastlogoff = "N/A"
+
+        if 'loccountrycode' in data['response']['players'][0]:
+            countrycode = data['response']['players'][0]['loccountrycode']
+        else: countrycode = "N/A"
+
+        friendinfo = f"{personaname} - Last online: {lastlogoff} - Country: {countrycode}"
+        friendinfo_lst.append(friendinfo)
+
+    return friendinfo_lst
 
 def sorted():
     game_name_list = []
@@ -95,6 +120,14 @@ def main_gui():
 
     lbl = Label(master=root2, text=f"Welcome {personaname}")
     lbl.pack()
+
+    lbl2 = Label(master=root2, text=f"friendlist")
+    lbl2.pack()
+    last_logoff_friendlist(steamid)
+    for i, friend in enumerate(friendinfo_lst):
+        label = Label(root2, text=friend)
+        label.pack()
+    root2.mainloop()
 
 def login_gui():
     global root1
