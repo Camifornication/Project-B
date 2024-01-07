@@ -66,6 +66,7 @@ def unix_to_normal(unix_date):
 
 def last_logoff_friendlist(steamid):  # get each friend of friendlist with last logoff
     global friendinfo_lst
+    friend_info_list = []
     friendinfo_lst = []
 
     response = requests.get(
@@ -91,22 +92,30 @@ def last_logoff_friendlist(steamid):  # get each friend of friendlist with last 
             countrycode = data['response']['players'][0]['loccountrycode']
         else: countrycode = "N/A"
 
-        friendinfo = f"{personaname} - Last online: {lastlogoff} - Country: {countrycode}"
+        if 'personastate' in data['response']['players'][0]:
+            personastate = data['response']['players'][0]['personastate']
+            if personastate == 0:
+                online_status = "Offline"
+            elif personastate == 1:
+                online_status = "Online"
+            elif personastate == 2:
+                online_status = "Do Not Disturb"
+            elif personastate == 3:
+                online_status = "Away"
+            elif personastate == 4:
+                online_status = "Snooze"
+            else:
+                online_status = "N/A"
+        friend_info_dict = {'personaname': personaname, 'onlinestatus': online_status, 'lastlogoff': lastlogoff}
+        friend_info_list.append(friend_info_dict)
+        if personastate == 0:
+            friendinfo = f"{personaname} - {online_status} - Last online: {lastlogoff}"
+        else:
+            friendinfo = f"{personaname} - {online_status}"
         friendinfo_lst.append(friendinfo)
 
-    return friendinfo_lst
+    return friendinfo_lst, friend_info_list
 
-def sorted():
-    game_name_list = []
-    with open('steam.json', 'r') as json_file:
-        data = json.load(json_file)
-        for game_name in data:
-            game_name_list.append(game_name['name'])
-        game_name_list.sort()
-        for element in game_name_list:
-            print(element)
-
-# sorted()
 
 def main_gui():
     steamid = steamid_input.get()
