@@ -43,6 +43,11 @@ def get_json_file(steam_api_link):
     response = requests.get(steam_api_link)
     data = response.json()
     return json.dumps(data, indent=2)
+def get_all_games():
+    return get_json_file('https://api.steampowered.com/ISteamApps/GetAppList/v2')
+
+def get_recently_played_games(steamid):
+    return get_json_file(f'https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={steam_api_key}&steamid={steamid}&count=10')
 
 def get_friendlist(steamid):
     return get_json_file(f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={steam_api_key}&steamid={steamid}&relationship=friend")
@@ -68,6 +73,8 @@ def last_logoff_friendlist(steamid):  # get each friend of friendlist with last 
     global friendinfo_lst
     friend_info_list = []
     friendinfo_lst = []
+    friends_recently_played_games = []
+    friends_recently_played_count = {}
 
     response = requests.get(
         f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={steam_api_key}&steamid={steamid}&relationship=friend")
@@ -76,6 +83,14 @@ def last_logoff_friendlist(steamid):  # get each friend of friendlist with last 
     for friend in data['friendslist']['friends']:
         steamid = friend['steamid']
         steamid_list.append(steamid)
+    for steamid in steamid_list:
+        response = requests.get(
+            f"https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={steam_api_key}&steamid={steamid}&count=10")
+        data = response.json()
+        if 'games' in data['response']:
+            for game in data['response']['games']:
+                friends_recently_played_games.append(game['name'])
+
     for steamid in steamid_list:
         response = requests.get(
             f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={steam_api_key}&steamids={steamid}")
@@ -113,8 +128,19 @@ def last_logoff_friendlist(steamid):  # get each friend of friendlist with last 
         else:
             friendinfo = f"{personaname} - {online_status}"
         friendinfo_lst.append(friendinfo)
+    for game in friends_recently_played_games:
+        if game in friends_recently_played_count:
+            friends_recently_played_count[game] += 1
+        else:
+            friends_recently_played_count[game] = 1
+    sorted_friends_recently_played_count = sorted(friends_recently_played_count.items(), key=lambda x :x[1], reverse=True)
+    print(sorted_friends_recently_played_count)
+    top3games = []
+    for topgames in sorted_friends_recently_played_count[:5]:
+        top3 = topgames[0]
+        top3games.append(top3)
 
-    return friendinfo_lst, friend_info_list
+    return friendinfo_lst, friend_info_list, top3games
 
 
 def main_gui():
@@ -127,15 +153,36 @@ def main_gui():
 
     personaname = get_personaname(steamid)
 
-    lbl = Label(master=root2, text=f"Welcome {personaname}")
-    lbl.pack()
+    lbl = Label(master=root2, text=f"Welcome {personaname}", anchor='center')
+    lbl.grid(column=0, row=0, columnspan=2)
 
     lbl2 = Label(master=root2, text=f"friendlist")
-    lbl2.pack()
-    last_logoff_friendlist(steamid)
-    for i, friend in enumerate(friendinfo_lst):
-        label = Label(root2, text=friend)
-        label.pack()
+    lbl2.grid(column=0, row=1)
+
+    listbox_friends = Listbox(master=root2, selectmode=SINGLE, height=30, width=65)
+
+    # scrollbar = Scrollbar(root2, command=listbox_friends.yview)
+    # scrollbar.pack(side=RIGHT, fill=Y)
+
+    # listbox_friends.config(yscrollcommand=scrollbar.set)
+    friendinfo_lst, friend_info_list, top3games = last_logoff_friendlist(steamid)
+    for friend in friendinfo_lst:
+        listbox_friends.insert(END, friend)
+    listbox_friends.grid(column=0, row=2)
+
+
+    lbl_friendsareplaying = Label(master=root2, text="Friends are playing:")
+    lbl_friendsareplaying.grid(column=1, row=1)
+    listbox_friend_games = Listbox(master=root2, selectmode=SINGLE, height=5, width=65)
+    for game in top3games:
+        listbox_friend_games.insert(END, game)
+    listbox_friend_games.grid(column=1, row=2, sticky='N')
+    # lbl2 = Label(master=root2, text=f"friendlist")
+    # lbl2.pack()
+    # last_logoff_friendlist(steamid)
+    # for i, friend in enumerate(friendinfo_lst):
+    #     label = Label(root2, text=friend)
+    #     label.pack()
     root2.mainloop()
 
 def login_gui():
