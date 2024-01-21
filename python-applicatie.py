@@ -174,6 +174,13 @@ def get_personaname(steamid):
     personaname = data['response']['players'][0]['personaname']
     return personaname
 
+def GetOwnedGames(steamid):
+    return get_json_file(
+        f"https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={steam_api_key}&steamid={steamid}&include_appinfo=true&include_played_free_games=true")
+
+def GetPlayerAchievements(steamid):
+    return get_json_file(
+        f"http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=440&key={steam_api_key}&steamid={steamid}")
 
 """
 Tijd functies
@@ -222,6 +229,17 @@ def get_friends_recent_games(steamid):
             recent_games_count[game] = 1
     return recent_games_count
 
+def GetSteamLevel(steamid):
+    response = requests.get(
+        f"https://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key={steam_api_key}&steamid={steamid}")
+    data = response.json()
+    print(data)
+    if "player_level" in data['response']:
+        friend_lvl = str(data["response"]["player_level"])
+        return friend_lvl
+    else:
+        friend_lvl = "N/A"
+        return friend_lvl
 
 def get_friend_info(steamid):
     friend_info_list = []
@@ -315,16 +333,41 @@ def friend_gui(event):
         # print(friend_info_list)
         for i in range(0, len(friend_info_list)):
             if friend_info_list[i]['personaname'] == username_friend:
+                clickedfriend_dict = friend_info_list[i]
                 print(friend_info_list[i])
                 break
+
+        steamid = clickedfriend_dict["friendsteamid"]
+        countrycode = clickedfriend_dict['countrycode']
+
+        friend_lvl = GetSteamLevel(steamid)
 
         root_friend = Tk()
 
         root_friend.title("Friend")
         root_friend.geometry("400x500")
 
-        friendnamelbl = Label(root_friend, text=f"Name: {username_friend}")
+        friendnamelbl = Label(root_friend, text=f"{username_friend}")
         friendnamelbl.grid(row=0, column=0)
+
+        friendstatuslbl = Label(root_friend, text=f"{countrycode}")
+        friendstatuslbl.grid(row=1, column=0)
+
+        friendlevellbl = Label(root_friend, text=f"level {friend_lvl}")
+        friendlevellbl.grid(row=0, column=1)
+
+        friend_recent_games_list = []
+        response = requests.get(
+            f"https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={steam_api_key}&steamid={steamid}&count=10")
+        data = response.json()
+        if 'games' in data['response']:
+            listbox_recentgames_friend = Listbox(root_friend, selectmode=SINGLE, height=30, width=65)
+            for game in data['response']['games']:
+                print(game)
+                friend_recent_games_list.append(game['name'])
+            for game in friend_recent_games_list:
+                listbox_recentgames_friend.insert(END, f"{game}")
+            listbox_recentgames_friend.grid(row=2, column=0, columnspan=2)
 
         root_friend.mainloop()
 
