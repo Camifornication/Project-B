@@ -16,7 +16,9 @@ user_id = "76561198424424214"
 """
 Zoek functies
 """
-def binary_search(lst, target):     #binary search
+
+
+def binary_search(lst, target):  # binary search
     sorted_list = my_sort(lst)
     low, high = 0, len(sorted_list) - 1
     while low <= high:
@@ -30,10 +32,13 @@ def binary_search(lst, target):     #binary search
             low = mid + 1
     return "No results..."
 
+
 """
 Sorteer functies
 """
-def sort_list(lst):       #sort function selection sort? (vgm is het bubble sort)
+
+
+def sort_list(lst):  # sort function selection sort? (vgm is het bubble sort)
     lst_sorted = lst.copy()
     gewisseld = True
     while gewisseld:
@@ -46,17 +51,78 @@ def sort_list(lst):       #sort function selection sort? (vgm is het bubble sort
                 continue
     return lst_sorted
 
-def sort_list_with_dicts(lst):
-    index = 0
-    lst_sorted = lst.copy()
-    gewisseld = True
-    while gewisseld:
-        gewisseld = False
-        for i in range(0, len(lst_sorted) - 1):
-            if list(lst_sorted[i].values())[index] > list(lst_sorted[i + 1].values())[index]:
-                lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
-                gewisseld = True
-    return lst_sorted
+
+def sort_list_with_dicts_by_onlinstatus(lst, button_state):
+    if button_state == 0:
+        index = 1
+        lst_sorted = lst.copy()
+        gewisseld = True
+        while gewisseld:
+            gewisseld = False
+            for i in range(0, len(lst_sorted) - 1):
+                if list(lst_sorted[i].values())[index] != 'Online' and list(lst_sorted[i + 1].values())[index] == 'Online':
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+                elif list(lst_sorted[i].values())[index] == 'Offline' and list(lst_sorted[i + 1].values())[index] != 'Offline':
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+                elif list(lst_sorted[i].values())[index] == 'Snooze' and list(lst_sorted[i + 1].values())[index] == 'Away':
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+                elif list(lst_sorted[i].values())[index] == 'Away' and list(lst_sorted[i + 1].values())[index] == 'Online':
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+                else:
+                    continue
+        return lst_sorted
+    else:
+        "online, away, snooze, offline"
+        index = 1
+        lst_sorted = lst.copy()
+        gewisseld = True
+        while gewisseld:
+            gewisseld = False
+            for i in range(0, len(lst_sorted) - 1):
+                if list(lst_sorted[i].values())[index] == 'Online' and list(lst_sorted[i + 1].values())[index] != 'Online':
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+                elif list(lst_sorted[i].values())[index] != 'Offline' and list(lst_sorted[i + 1].values())[index] == 'Offline':
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+                elif list(lst_sorted[i].values())[index] == 'Away' and list(lst_sorted[i + 1].values())[index] == 'Snooze':
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+                elif list(lst_sorted[i].values())[index] == 'Snooze' and list(lst_sorted[i + 1].values())[index] == 'Offline':
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+                else:
+                    continue
+        return lst_sorted
+
+def sort_list_with_dicts(lst, button_state):
+    if button_state == 0:
+        index = 0
+        lst_sorted = lst.copy()
+        gewisseld = True
+        while gewisseld:
+            gewisseld = False
+            for i in range(0, len(lst_sorted) - 1):
+                if list(lst_sorted[i].values())[index] > list(lst_sorted[i + 1].values())[index]:
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+        return lst_sorted
+    else:
+        index = 0
+        lst_sorted = lst.copy()
+        gewisseld = True
+        while gewisseld:
+            gewisseld = False
+            for i in range(0, len(lst_sorted) - 1):
+                if list(lst_sorted[i].values())[index] < list(lst_sorted[i + 1].values())[index]:
+                    lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                    gewisseld = True
+        return lst_sorted
+
 
 def sort_dict_on_values(input_dict):
     items = list(input_dict.items())
@@ -70,43 +136,62 @@ def sort_dict_on_values(input_dict):
     dict_sorted = dict(items)
     return dict_sorted
 
+
 """
 Get json file functies / api
 """
+
+
 def get_json_file(steam_api_link):
     response = requests.get(steam_api_link)
     data = response.json()
     return json.dumps(data, indent=2)
+
+
 def get_all_games():
     return get_json_file('https://api.steampowered.com/ISteamApps/GetAppList/v2')
 
+
 def get_recently_played_games(steamid):
-    return get_json_file(f'https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={steam_api_key}&steamid={steamid}&count=10')
+    return get_json_file(
+        f'https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={steam_api_key}&steamid={steamid}&count=10')
+
 
 def get_friendlist(steamid):
-    return get_json_file(f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={steam_api_key}&steamid={steamid}&relationship=friend")
+    return get_json_file(
+        f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={steam_api_key}&steamid={steamid}&relationship=friend")
+
 
 def get_player_info(steamid):
-    return get_json_file(f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={steam_api_key}&steamids={steamid}")
+    return get_json_file(
+        f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={steam_api_key}&steamids={steamid}")
+
 
 def get_personaname(steamid):
-    response = requests.get(f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={steam_api_key}&steamids={steamid}")
+    response = requests.get(
+        f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={steam_api_key}&steamids={steamid}")
     data = response.json()
     personaname = data['response']['players'][0]['personaname']
     return personaname
 
+
 """
 Tijd functies
 """
+
+
 def unix_to_normal(unix_date):
     datetime_object = datetime.datetime.fromtimestamp(unix_date)
 
     date_format = "%d-%m-%Y %H:%M"
     return datetime_object.strftime(date_format)
 
+
 """
 functies voor informatie
 """
+
+
 def get_friendlist_ids(steamid):
     friend_ids_list = []
 
@@ -117,6 +202,7 @@ def get_friendlist_ids(steamid):
         friend_id = friend['steamid']
         friend_ids_list.append(friend_id)
     return friend_ids_list
+
 
 def get_friends_recent_games(steamid):
     friends_recent_games_list = []
@@ -170,20 +256,84 @@ def get_friend_info(steamid):
 
         if 'loccountrycode' in data['response']['players'][0]:
             countrycode = data['response']['players'][0]['loccountrycode']
-        else: countrycode = "N/A"
+        else:
+            countrycode = "N/A"
 
-        friend_info_dict = {'personaname': personaname, 'onlinestatus': online_status, 'lastlogoff': lastlogoff, 'countrycode': countrycode}
+        if 'steamid' in data['response']['players'][0]:
+            friendsteamid = data['response']['players'][0]['steamid']
+        else:
+            friendsteamid = "N/A"
+
+        if 'realname' in data['response']['players'][0]:
+            realname = data['response']['players'][0]['realname']
+        else:
+            realname = "N/A"
+
+        friend_info_dict = {'personaname': personaname, 'onlinestatus': online_status, 'lastlogoff': lastlogoff,
+                            'countrycode': countrycode,'realname': realname, 'friendsteamid': friendsteamid}
         friend_info_list.append(friend_info_dict)
     return friend_info_list
+
 
 """
 GUI
 """
-def main_gui():
-    steamid = steamid_input.get()
 
-    root1.destroy()
 
+def sort_gui_friendlist_by_name():
+    listbox_friends.delete(0, END)
+    sorted_list = sort_list_with_dicts(friend_info_list, button_state)
+    for friend in sorted_list:
+        personaname = friend['personaname']
+        onlinestatus = friend['onlinestatus']
+        listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
+    # listbox_friends.grid(column=0, columnspan=2, row=3)
+
+def sort_gui_friendlist_by_status():
+    listbox_friends.delete(0, END)
+    sorted_list = sort_list_with_dicts_by_onlinstatus(friend_info_list, button_state)
+    for friend in sorted_list:
+        personaname = friend['personaname']
+        onlinestatus = friend['onlinestatus']
+        listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
+
+def asc_desc():
+    global button_state
+    if button_state == 0:
+        button_state = 1
+        btn_asc_desc.config(text="Descending")
+    else:
+        button_state = 0
+        btn_asc_desc.config(text="Ascending")
+
+def friend_gui(event):
+    selected_index = listbox_friends.nearest(event.y)
+    if selected_index is not None:
+        selected_item = listbox_friends.get(selected_index)
+        print(f"Double-clicked on item: {selected_item}")
+        username_friend, status_friend = str(selected_item).split(' - ')
+        # print(friend_info_list)
+        for i in range(0, len(friend_info_list)):
+            if friend_info_list[i]['personaname'] == username_friend:
+                print(friend_info_list[i])
+                break
+
+        root_friend = Tk()
+
+        root_friend.title("Friend")
+        root_friend.geometry("400x500")
+
+        friendnamelbl = Label(root_friend, text=f"Name: {username_friend}")
+        friendnamelbl.grid(row=0, column=0)
+
+        root_friend.mainloop()
+
+def main_gui(steamid):
+    global friend_info_list
+    global listbox_friends
+    global btn_asc_desc
+    global button_state
+    button_state = 0
     root2 = Tk()
 
     root2.geometry("1200x600")
@@ -195,77 +345,76 @@ def main_gui():
     lbl.grid(column=0, row=0, columnspan=2)
 
     lbl2 = Label(master=root2, text=f"friendlist")
-    lbl2.grid(column=0, row=1)
+    lbl2.grid(column=0, columnspan=2, row=1)
 
-    btn = Button(master=root2, text="Sort")
-    btn.grid(column=1, row=1, sticky="NESW")
-    "sort knop staat op prima plek, combobox werkt nog niet"
+    btn_asc_desc = Button(master=root2, text="Ascending", command=asc_desc)
+    btn_asc_desc.grid(column=0, row=2, sticky="NESW")
+    # checkbox_state = BooleanVar()
+    # checkbox = Checkbutton(master=root2, text="Descending", variable=checkbox_state, command=functie)
+    # checkbox.grid(column=1, row=2, sticky="NESW")
 
-    # options = ['Sort ascending', 'sort descending']
-    # combobox_sort_friendlist = Combobox(master=root2, values=options)
-    # combobox_sort_friendlist.grid(column=1, row=1, sticky="NESW")
+    btn_sort_name = Button(master=root2, text="Sort by name", command=sort_gui_friendlist_by_name)
+    btn_sort_name.grid(column=1, row=2, sticky="NESW")
+
+    btn_sort_name = Button(master=root2, text="Sort by status", command=sort_gui_friendlist_by_status)
+    btn_sort_name.grid(column=2, row=2, sticky="NESW")
 
     listbox_friends = Listbox(master=root2, selectmode=SINGLE, height=30, width=65)
+    # scrollbar = Scrollbar(root2, command=listbox_friends.yview)
+    # scrollbar.pack(side=RIGHT, fill=Y)
     #
-    # # scrollbar = Scrollbar(root2, command=listbox_friends.yview)
-    # # scrollbar.pack(side=RIGHT, fill=Y)
-    #
-    # # listbox_friends.config(yscrollcommand=scrollbar.set)
-
-    # friendinfo_lst, friend_info_list, top3games = last_logoff_friendlist(steamid)
+    # listbox_friends.config(yscrollcommand=scrollbar.set)
 
     friend_info_list = get_friend_info(steamid)
-    for friend in friend_info_list:
+    sorted_friendlist = sort_list_with_dicts_by_onlinstatus(friend_info_list, button_state)
+    for friend in sorted_friendlist:
         personaname = friend['personaname']
         onlinestatus = friend['onlinestatus']
         listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
-    listbox_friends.grid(column=0, columnspan=2, row=2)
+    listbox_friends.grid(column=0, columnspan=3, row=3)
+
+    listbox_friends.bind("<Double-Button-1>", friend_gui)
 
     lbl_friendsareplaying = Label(master=root2, text="Friends are playing:")
-    lbl_friendsareplaying.grid(column=2, row=1)
+    lbl_friendsareplaying.grid(column=3, row=1)
 
     listbox_friend_games = Listbox(master=root2, selectmode=SINGLE, height=5, width=65)
     recent_games_count = get_friends_recent_games(steamid)
     recent_games_sorted = list(sort_dict_on_values(recent_games_count).keys())[:5]
     for game in recent_games_sorted:
         listbox_friend_games.insert(END, game)
-    listbox_friend_games.grid(column=2, row=2, sticky='N')
-
+    listbox_friend_games.grid(column=3, row=3, sticky="N")
+    root1.destroy()
     root2.mainloop()
 
-def loading_screen():
-    global loadingscreen
-    loadingscreen = Tk()
-    loadingscreen.title("Loading Screen")
-    loadingscreen.geometry("1200x600")
 
-    loading_lbl = Label(master=loadingscreen, text="Loading...")
-    loading_lbl.pack()
+def on_click():
+    steamid = steamid_input.get()
 
-    loadingscreen.mainloop()
-def login_gui():
-    global root1
-    global steamid_input
-    root1 = Tk()
-    root1.geometry("1200x600")
-    root1.title("Login")
-    # root.resizable(0,0)
-    root1.configure(bg="#1b2838")
+    root1.title("Loading...")
+    lbl1.config(text="Loading...", font=("", 20))
+    steamid_input.destroy()
+    confirm_btn.destroy()
+    root1.update()
 
-    lbl1 = Label(master=root1, text="What is your steam ID?", bg="#66c0f4")
-    lbl1.pack(pady=20)
-
-    steamid_input = Entry(master=root1)
-    steamid_input.pack()
-
-    confirm_btn = Button(master=root1, text="Confirm", command=main_gui)
-    confirm_btn.pack(pady=20)
+    main_gui(steamid)
 
 
-    root1.mainloop()
+root1 = Tk()
+root1.geometry("1200x600")
+root1.title("Login")
+root1.configure(bg="#1b2838")
 
-login_gui()
+lbl1 = Label(master=root1, text="What is your steam ID?", bg="#66c0f4")
+lbl1.pack(pady=20)
+
+steamid_input = Entry(master=root1)
+steamid_input.pack()
+
+confirm_btn = Button(master=root1, text="Confirm", command=on_click)
+confirm_btn.pack(pady=20)
+
+root1.mainloop()
 
 
-
-# print(friend_info_list)
+# print(get_player_info(jort_ID))
