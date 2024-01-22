@@ -19,7 +19,7 @@ Zoek functies
 
 
 def binary_search(lst, target):  # binary search
-    sorted_list = my_sort(lst)
+    sorted_list = sort_list(lst)
     low, high = 0, len(sorted_list) - 1
     while low <= high:
         mid = (low + high) // 2
@@ -100,28 +100,33 @@ def sort_list_with_dicts_by_onlinstatus(lst, button_state):
         return lst_sorted
 
 def sort_list_with_dicts(lst, button_state):
-    if button_state == 0:
-        index = 0
-        lst_sorted = lst.copy()
-        gewisseld = True
-        while gewisseld:
-            gewisseld = False
-            for i in range(0, len(lst_sorted) - 1):
-                if list(lst_sorted[i].values())[index] > list(lst_sorted[i + 1].values())[index]:
+    # if button_state == 0:
+    index = 0
+    lst_sorted = lst.copy()
+    gewisseld = True
+    while gewisseld:
+        gewisseld = False
+        for i in range(0, len(lst_sorted) - 1):
+            if button_state == 0:
+                if lst_sorted[i]['personaname'].lower() > lst_sorted[i + 1]['personaname'].lower():
                     lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
                     gewisseld = True
-        return lst_sorted
-    else:
-        index = 0
-        lst_sorted = lst.copy()
-        gewisseld = True
-        while gewisseld:
-            gewisseld = False
-            for i in range(0, len(lst_sorted) - 1):
-                if list(lst_sorted[i].values())[index] < list(lst_sorted[i + 1].values())[index]:
+            else:
+                if lst_sorted[i]['personaname'].lower() < lst_sorted[i + 1]['personaname'].lower():
                     lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
                     gewisseld = True
-        return lst_sorted
+    return lst_sorted
+    # else:
+    #     index = 0
+    #     lst_sorted = lst.copy()
+    #     gewisseld = True
+    #     while gewisseld:
+    #         gewisseld = False
+    #         for i in range(0, len(lst_sorted) - 1):
+    #             if list(lst_sorted[i].values())[index].lower() < list(lst_sorted[i + 1].values())[index].lower():
+    #                 lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+    #                 gewisseld = True
+    #     return lst_sorted
 
 
 def sort_dict_on_values(input_dict):
