@@ -2,6 +2,7 @@ import json
 import requests
 from tkinter import *
 import datetime
+import threading
 
 jort_ID = 76561198424424214
 camiel_ID = 76561199075949807
@@ -377,10 +378,10 @@ def friend_gui(event):
         root_friend.mainloop()
 
 def main_gui(steamid):
-    global friend_info_list
-    global listbox_friends
-    global btn_asc_desc
-    global button_state
+    global friend_info_list, listbox_friends, btn_asc_desc, button_state
+    # global listbox_friends
+    # global btn_asc_desc
+    # global button_state
     button_state = 0
     root2 = Tk()
 
@@ -435,6 +436,80 @@ def main_gui(steamid):
     root1.destroy()
     root2.mainloop()
 
+def create_gamelist():
+    with open('steam.json', 'r') as file:
+        data = json.load(file)
+    # print(json.dumps(data, indent=2))
+    all_games = []
+    for i, game in enumerate(data):
+        game_name = data[i]['name']
+        game_id = data[i]['appid']
+        game_price = data[i]['price']
+        game_positive_ratings = data[i]['positive_ratings']
+        game_negative_ratings = data[i]['negative_ratings']
+        game_genre = data[i]['genres']
+        game_release_date = data[i]['release_date']
+        game_info_tuple = (game_name, game_id, game_price, game_positive_ratings, game_negative_ratings, game_genre, game_release_date)
+        all_games.append(game_info_tuple)
+    return all_games
+
+def update_labels(games_frame, start, end):
+    for label in games_frame.winfo_children():
+        label.destroy()
+
+    all_games = create_gamelist()
+    for i, game in enumerate(all_games[start:end]):
+        game_name_lbl = Label(master=games_frame, text=f"{game[0]}")
+        game_name_lbl.grid(column=0, row=i, pady=3, sticky='W')
+    for i, game in enumerate(all_games[start:end]):
+        game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
+        game_name_lbl.grid(column=1, row=i, pady=3, padx=30, sticky='W')
+    for i, game in enumerate(all_games[start:end]):
+        game_name_lbl = Label(master=games_frame, text=f"Genre: {game[4]}")
+        game_name_lbl.grid(column=2, row=i, pady=3, sticky='W')
+
+def next_page():
+    global start, end
+    start += 20
+    end += 20
+    update_labels(games_frame, start, end)
+    update_page_label()
+
+def previous_page():
+    global start, end
+    start -= 20
+    end -= 20
+    update_labels(games_frame, start, end)
+    update_page_label()
+
+def update_page_label():
+    page_label.config(text=f"Page {start // 15 + 1}")
+
+def store_gui():
+    global start, end, games_frame, page_label
+    start = 0
+    end = 20
+
+    store = Tk()
+    store.title("Steam Store")
+    # store.geometry("1200x600")
+
+    games_frame = Frame(master=store)
+    games_frame.grid(column=0, columnspan=3, row=0, padx=100)
+
+    previous_button = Button(master=store, text="<", font=("", 15), command=previous_page)
+    previous_button.grid(column=0, row=1, pady=5, sticky="NESW")
+
+    page_label = Label(master=store, text="Page 1")
+    page_label.grid(column=1, row=1)
+
+    next_button = Button(master=store, text=">", font=("", 15), command=next_page)
+    next_button.grid(column=2, row=1, pady=5, sticky="NESW")
+
+    update_labels(games_frame, start, end)
+
+    store.mainloop()
+
 
 def on_click():
     steamid = steamid_input.get()
@@ -444,7 +519,6 @@ def on_click():
     steamid_input.destroy()
     confirm_btn.destroy()
     root1.update()
-
     main_gui(steamid)
 
 
@@ -464,5 +538,4 @@ confirm_btn.pack(pady=20)
 
 root1.mainloop()
 
-
-# print(get_player_info(jort_ID))
+store_gui()
