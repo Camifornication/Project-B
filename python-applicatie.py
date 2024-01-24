@@ -387,11 +387,10 @@ def main_gui(steamid):
 
     root2.geometry("1200x600")
     root2.title("Main screen")
-
     personaname = get_personaname(steamid)
 
     lbl = Label(master=root2, text=f"Welcome {personaname}", anchor='center')
-    lbl.grid(column=0, row=0, columnspan=2)
+    lbl.grid(column=1, row=0)
 
     lbl2 = Label(master=root2, text=f"friendlist")
     lbl2.grid(column=0, columnspan=2, row=1)
@@ -433,7 +432,12 @@ def main_gui(steamid):
     for game in recent_games_sorted:
         listbox_friend_games.insert(END, game)
     listbox_friend_games.grid(column=3, row=3, sticky="N")
+
+    open_store = Button(master=root2, text="Open Store", command=store_gui)
+    open_store.grid(column=0, row=0, sticky="W")
+
     root1.destroy()
+
     root2.mainloop()
 
 def create_gamelist():
@@ -537,5 +541,3 @@ confirm_btn = Button(master=root1, text="Confirm", command=on_click)
 confirm_btn.pack(pady=20)
 
 root1.mainloop()
-
-store_gui()
