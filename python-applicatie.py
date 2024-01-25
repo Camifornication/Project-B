@@ -3,6 +3,7 @@ import requests
 from tkinter import *
 import datetime
 import threading
+from s_c import serial_communication, check_online, read_serial
 
 jort_ID = 76561198424424214
 camiel_ID = 76561199075949807
@@ -345,7 +346,6 @@ def friend_gui(event):
 
         steamid = clickedfriend_dict["friendsteamid"]
         countrycode = clickedfriend_dict['countrycode']
-
         friend_lvl = GetSteamLevel(steamid)
 
         root_friend = Tk()
@@ -356,8 +356,11 @@ def friend_gui(event):
         friendnamelbl = Label(root_friend, text=f"{username_friend}")
         friendnamelbl.grid(row=0, column=0)
 
-        friendstatuslbl = Label(root_friend, text=f"{countrycode}")
-        friendstatuslbl.grid(row=1, column=0)
+        friendcountrylbl = Label(root_friend, text=f"{countrycode}")
+        friendcountrylbl.grid(row=1, column=0)
+
+        TI_button = Button(root_friend, text="Refresh status on lcd", command=lambda: serial_communication(steamid))
+        TI_button.grid(row=1, column=1)
 
         friendlevellbl = Label(root_friend, text=f"level {friend_lvl}")
         friendlevellbl.grid(row=0, column=1)
@@ -375,7 +378,9 @@ def friend_gui(event):
                 listbox_recentgames_friend.insert(END, f"{game}")
             listbox_recentgames_friend.grid(row=2, column=0, columnspan=2)
 
+
         root_friend.mainloop()
+
 
 def main_gui(steamid):
     global friend_info_list, listbox_friends, btn_asc_desc, button_state
