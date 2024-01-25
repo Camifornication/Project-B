@@ -2,7 +2,6 @@ import json
 import requests
 from tkinter import *
 import datetime
-import threading
 from s_c import serial_communication, check_online, read_serial
 
 jort_ID = 76561198424424214
@@ -381,9 +380,23 @@ def friend_gui(event):
 
         root_friend.mainloop()
 
+def on_click_refresh(steamid):
+    refresh_friendlist.config(text="Loading...")
+    update_friendlist(steamid)
+
+def update_friendlist(steamid):
+    global friend_info_list
+    refresh_friendlist.config(text="Refresh")
+    listbox_friends.delete(0, END)
+    friend_info_list = get_friend_info(steamid)
+    sorted_friendlist = sort_list_with_dicts_by_onlinstatus(friend_info_list, button_state)
+    for friend in sorted_friendlist:
+        personaname = friend['personaname']
+        onlinestatus = friend['onlinestatus']
+        listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
 
 def main_gui(steamid):
-    global friend_info_list, listbox_friends, btn_asc_desc, button_state
+    global listbox_friends, btn_asc_desc, button_state, refresh_friendlist, friend_info_list
     # global listbox_friends
     # global btn_asc_desc
     # global button_state
@@ -412,18 +425,21 @@ def main_gui(steamid):
     btn_sort_name = Button(master=root2, text="Sort by status", command=sort_gui_friendlist_by_status)
     btn_sort_name.grid(column=2, row=2, sticky="NESW")
 
+    refresh_friendlist = Button(master=root2, text="Load Friendlist", command=lambda: on_click_refresh(steamid))
+    refresh_friendlist.grid(column=2, row=1, stick="NESW")
+
     listbox_friends = Listbox(master=root2, selectmode=SINGLE, height=30, width=65)
     # scrollbar = Scrollbar(root2, command=listbox_friends.yview)
     # scrollbar.pack(side=RIGHT, fill=Y)
     #
     # listbox_friends.config(yscrollcommand=scrollbar.set)
 
-    friend_info_list = get_friend_info(steamid)
-    sorted_friendlist = sort_list_with_dicts_by_onlinstatus(friend_info_list, button_state)
-    for friend in sorted_friendlist:
-        personaname = friend['personaname']
-        onlinestatus = friend['onlinestatus']
-        listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
+    # friend_info_list = get_friend_info(steamid)
+    # sorted_friendlist = sort_list_with_dicts_by_onlinstatus(friend_info_list, button_state)
+    # for friend in sorted_friendlist:
+    #     personaname = friend['personaname']
+    #     onlinestatus = friend['onlinestatus']
+    #     listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
     listbox_friends.grid(column=0, columnspan=3, row=3)
 
     listbox_friends.bind("<Double-Button-1>", friend_gui)
