@@ -33,11 +33,56 @@ def binary_search(lst, target):  # binary search
             low = mid + 1
     return "No results..."
 
+def binary_search_substring(list, target_string):
+    target = target_string.lower()
+    index = 0
+    results = []
+    low, high = 0, len(list) - 1
+
+    while low <= high:
+        mid = (low + high) // 2
+        mid_word = list[mid]
+        # print(mid_word[index])
+        if target in mid_word[index].lower()[0:len(target)]:
+            # Expand to the left to find all occurrences
+            left = mid
+            while left >= 0 and target in list[left][index].lower():
+                results.append(list[left])
+                left -= 1
+
+            # Expand to the right to find all occurrences
+            right = mid + 1
+            while right < len(list) and target in list[right][index].lower():
+                results.append(list[right])
+                right += 1
+
+            return results
+
+        elif target < mid_word[index].lower():
+            high = mid - 1
+        elif target > mid_word[index].lower():
+            low = mid + 1
+
+    return results
 
 """
 Sorteer functies
 """
-
+def quicksort_lst_with_tuples(lst):
+    index = 0
+    if len(lst) <= 1:
+        return lst
+    else:
+        pivot = lst[0]
+        lesser = []
+        greater = []
+        for x in lst[1:]:
+            # print(x[0])
+            if x[index].lower() <= pivot[index].lower():
+                lesser.append(x)
+            else:
+                greater.append(x)
+        return quicksort_lst_with_tuples(lesser) + [pivot] + quicksort_lst_with_tuples(greater)
 
 def sort_list(lst):  # sort function selection sort? (vgm is het bubble sort)
     lst_sorted = lst.copy()
@@ -46,6 +91,19 @@ def sort_list(lst):  # sort function selection sort? (vgm is het bubble sort)
         gewisseld = False
         for i in range(0, len(lst_sorted) - 1):
             if lst_sorted[i] > lst_sorted[i + 1]:
+                lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                gewisseld = True
+            else:
+                continue
+    return lst_sorted
+
+def sort_list_with_tuples(lst):  # sort function selection sort? (vgm is het bubble sort)
+    lst_sorted = lst.copy()
+    gewisseld = True
+    while gewisseld:
+        gewisseld = False
+        for i in range(0, len(lst_sorted) - 1):
+            if lst_sorted[i][0] > lst_sorted[i + 1][0]:
                 lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
                 gewisseld = True
             else:
@@ -395,7 +453,7 @@ def update_friendlist(steamid):
         onlinestatus = friend['onlinestatus']
         listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
 
-def main_gui(steamid):
+def main_gui(steamid, personaname):
     global listbox_friends, btn_asc_desc, button_state, refresh_friendlist, friend_info_list
     # global listbox_friends
     # global btn_asc_desc
@@ -405,7 +463,7 @@ def main_gui(steamid):
 
     root2.geometry("1200x600")
     root2.title("Main screen")
-    personaname = get_personaname(steamid)
+    # personaname = get_personaname(steamid)
 
     lbl = Label(master=root2, text=f"Welcome {personaname}", anchor='center')
     lbl.grid(column=1, row=0)
@@ -428,6 +486,7 @@ def main_gui(steamid):
     refresh_friendlist = Button(master=root2, text="Load Friendlist", command=lambda: on_click_refresh(steamid))
     refresh_friendlist.grid(column=2, row=1, stick="NESW")
 
+    friend_info_list = []
     listbox_friends = Listbox(master=root2, selectmode=SINGLE, height=30, width=65)
     # scrollbar = Scrollbar(root2, command=listbox_friends.yview)
     # scrollbar.pack(side=RIGHT, fill=Y)
@@ -487,10 +546,21 @@ def update_labels(games_frame, start, end):
         game_name_lbl = Label(master=games_frame, text=f"{game[0]}")
         game_name_lbl.grid(column=0, row=i, pady=3, sticky='W')
     for i, game in enumerate(all_games[start:end]):
-        game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
+        if game[2] == 0.0:
+            game_name_lbl = Label(master=games_frame, text=f"Free to play")
+        else:
+            game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
         game_name_lbl.grid(column=1, row=i, pady=3, padx=30, sticky='W')
+
     for i, game in enumerate(all_games[start:end]):
-        game_name_lbl = Label(master=games_frame, text=f"Genre: {game[4]}")
+        genres = game[5].split(";")
+        genre_string = "Genre: "
+        for j, genre in enumerate(genres):
+            if j == 0:
+                genre_string += genre
+            else:
+                genre_string += f", {genre}"
+        game_name_lbl = Label(master=games_frame, text=genre_string)
         game_name_lbl.grid(column=2, row=i, pady=3, sticky='W')
 
 def next_page():
@@ -510,8 +580,42 @@ def previous_page():
 def update_page_label():
     page_label.config(text=f"Page {start // 15 + 1}")
 
+def search_game(event):
+    target_string = search_entry.get()
+    if target_string == "":
+        update_labels(games_frame, start, end)
+    else:
+        results = binary_search_substring(quicksort_lst_with_tuples(create_gamelist()), target_string)
+        for label in games_frame.winfo_children():
+            label.destroy()
+        for i, game in enumerate(results[:20]):
+            game_name_lbl = Label(master=games_frame, text=f"{game[0]}")
+            game_name_lbl.grid(column=0, row=i, pady=3, sticky='W')
+        for i, game in enumerate(results[:20]):
+            if game[2] == 0.0:
+                game_name_lbl = Label(master=games_frame, text=f"Free to play")
+            else:
+                game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
+            game_name_lbl.grid(column=1, row=i, pady=3, padx=30, sticky='W')
+
+        for i, game in enumerate(results[:20]):
+            genres = game[5].split(";")
+            genre_string = "Genre: "
+            for j, genre in enumerate(genres):
+                if j == 0:
+                    genre_string += genre
+                else:
+                    genre_string += f", {genre}"
+            game_name_lbl = Label(master=games_frame, text=genre_string)
+            game_name_lbl.grid(column=2, row=i, pady=3, sticky='W')
+    # print("KAAS")
+    # all_games = create_gamelist()
+    # print(all_games)
+    # kaas = sort_list_with_tuples(all_games)
+    # print(kaas)
+
 def store_gui():
-    global start, end, games_frame, page_label
+    global start, end, games_frame, page_label, search_entry
     start = 0
     end = 20
 
@@ -519,46 +623,76 @@ def store_gui():
     store.title("Steam Store")
     # store.geometry("1200x600")
 
+    store_lbl = Label(master=store, text="Steam Store")
+    store_lbl.grid(column=0, columnspan=3, row=0, padx=400)
+
+    search_frame = Frame(master=store)
+    search_frame.grid(column=0, columnspan=3, row=1)
+
+    search_lbl = Label(master=search_frame, text="Search: ")
+    search_lbl.grid(column=0, row=0, sticky="W")
+
+    search_entry = Entry(master=search_frame, width=50)
+    search_entry.grid(column=1, row=0, columnspan=2, sticky="W")
+    search_entry.bind("<Return>", search_game)
+
     games_frame = Frame(master=store)
-    games_frame.grid(column=0, columnspan=3, row=0, padx=100)
+    games_frame.grid(column=0, columnspan=3, row=2)
 
     previous_button = Button(master=store, text="<", font=("", 15), command=previous_page)
-    previous_button.grid(column=0, row=1, pady=5, sticky="NESW")
+    previous_button.grid(column=0, row=3, pady=5, sticky="NESW")
 
     page_label = Label(master=store, text="Page 1")
-    page_label.grid(column=1, row=1)
+    page_label.grid(column=1, row=3)
 
     next_button = Button(master=store, text=">", font=("", 15), command=next_page)
-    next_button.grid(column=2, row=1, pady=5, sticky="NESW")
+    next_button.grid(column=2, row=3, pady=5, sticky="NESW")
 
     update_labels(games_frame, start, end)
 
     store.mainloop()
 
 
-def on_click():
+def on_click(event):
     steamid = steamid_input.get()
 
     root1.title("Loading...")
-    lbl1.config(text="Loading...", font=("", 20))
+    lbl_login.config(text="Loading...", font=("", 20))
     steamid_input.destroy()
     confirm_btn.destroy()
     root1.update()
-    main_gui(steamid)
 
+    try:
+        personaname = get_personaname(steamid)
+        main_gui(steamid, personaname)
+    except:
+        root1.title("Error")
+        lbl_login.config(text="Error\nSteam ID does not exist", font=("", 20))
+        return_btn = Button(master=root1, text="Return to login", command=return_to_login)
+        return_btn.pack()
 
-root1 = Tk()
-root1.geometry("1200x600")
-root1.title("Login")
-root1.configure(bg="#1b2838")
+def return_to_login():
+    root1.destroy()
+    login()
 
-lbl1 = Label(master=root1, text="What is your steam ID?", bg="#66c0f4")
-lbl1.pack(pady=20)
+def login():
+    global steamid_input, root1, lbl_login, confirm_btn
+    root1 = Tk()
+    root1.geometry("1200x600")
+    root1.title("Login")
+    root1.configure(bg="#1b2838")
 
-steamid_input = Entry(master=root1)
-steamid_input.pack()
+    lbl_login = Label(master=root1, text="What is your steam ID?", bg="#66c0f4")
+    lbl_login.pack(pady=20)
 
-confirm_btn = Button(master=root1, text="Confirm", command=on_click)
-confirm_btn.pack(pady=20)
+    steamid_input = Entry(master=root1)
+    steamid_input.pack()
+    steamid_input.bind("<Return>", on_click)
 
-root1.mainloop()
+    confirm_btn = Button(master=root1, text="Confirm", command=on_click)
+    confirm_btn.pack(pady=20)
+
+    root1.mainloop()
+
+login()
+# store_gui()
