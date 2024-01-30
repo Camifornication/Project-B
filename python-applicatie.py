@@ -2,6 +2,7 @@ import json
 import requests
 from tkinter import *
 import datetime
+import pandas as pd
 from s_c import serial_communication, check_online, read_serial
 
 jort_ID = 76561198424424214
@@ -578,7 +579,7 @@ def previous_page():
     update_page_label()
 
 def update_page_label():
-    page_label.config(text=f"Page {start // 15 + 1}")
+    page_label.config(text=f"Page {start // 20 + 1}")
 
 def search_game(event):
     target_string = search_entry.get()
@@ -588,31 +589,72 @@ def search_game(event):
         results = binary_search_substring(quicksort_lst_with_tuples(create_gamelist()), target_string)
         for label in games_frame.winfo_children():
             label.destroy()
-        for i, game in enumerate(results[:20]):
-            game_name_lbl = Label(master=games_frame, text=f"{game[0]}")
-            game_name_lbl.grid(column=0, row=i, pady=3, sticky='W')
-        for i, game in enumerate(results[:20]):
-            if game[2] == 0.0:
-                game_name_lbl = Label(master=games_frame, text=f"Free to play")
-            else:
-                game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
-            game_name_lbl.grid(column=1, row=i, pady=3, padx=30, sticky='W')
-
-        for i, game in enumerate(results[:20]):
-            genres = game[5].split(";")
-            genre_string = "Genre: "
-            for j, genre in enumerate(genres):
-                if j == 0:
-                    genre_string += genre
+        if results == []:
+            game_name_lbl = Label(master=games_frame, text="No results found...")
+            game_name_lbl.grid(column=0, row=0, pady=3, sticky='W')
+        else:
+            for i, game in enumerate(results[:20]):
+                game_name_lbl = Label(master=games_frame, text=f"{game[0]}")
+                game_name_lbl.grid(column=0, row=i, pady=3, sticky='W')
+            for i, game in enumerate(results[:20]):
+                if game[2] == 0.0:
+                    game_name_lbl = Label(master=games_frame, text=f"Free to play")
                 else:
-                    genre_string += f", {genre}"
-            game_name_lbl = Label(master=games_frame, text=genre_string)
-            game_name_lbl.grid(column=2, row=i, pady=3, sticky='W')
+                    game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
+                game_name_lbl.grid(column=1, row=i, pady=3, padx=30, sticky='W')
+
+            for i, game in enumerate(results[:20]):
+                genres = game[5].split(";")
+                genre_string = "Genre: "
+                for j, genre in enumerate(genres):
+                    if j == 0:
+                        genre_string += genre
+                    else:
+                        genre_string += f", {genre}"
+                game_name_lbl = Label(master=games_frame, text=genre_string)
+                game_name_lbl.grid(column=2, row=i, pady=3, sticky='W')
     # print("KAAS")
     # all_games = create_gamelist()
     # print(all_games)
     # kaas = sort_list_with_tuples(all_games)
     # print(kaas)
+
+def prijs_statistieken():
+    all_prices = []
+    with open('steam.json', 'r') as file:
+        data = json.load(file)
+    for i, game in enumerate(data):
+        price = data[i]['price']
+        all_prices.append(price)
+
+    data = {'Price': all_prices}
+    df = pd.DataFrame(data)
+
+    gemiddelde_prijs = df['Price'].mean()
+    mediaan_prijs = df['Price'].median()
+    standaarddeviatie_prijs = df['Price'].std()
+
+    return gemiddelde_prijs.round(2), mediaan_prijs.round(2), standaarddeviatie_prijs.round(2)
+
+def genre_frequentie():
+    all_genres = []
+    all_genres_count = {}
+    with open('steam.json', 'r') as file:
+        data = json.load(file)
+    for i, game in enumerate(data):
+        game_genres = data[i]['genres']
+        game_genre = game_genres.split(";")
+        for genre in game_genre:
+            all_genres.append(genre)
+    # print(all_genres)
+
+    for genre in all_genres:
+        if genre in all_genres_count:
+            all_genres_count[genre] += 1
+        else:
+            all_genres_count[genre] = 1
+    sorted_genre_count = sort_dict_on_values(all_genres_count)
+    return sorted_genre_count
 
 def store_gui():
     global start, end, games_frame, page_label, search_entry
@@ -623,11 +665,28 @@ def store_gui():
     store.title("Steam Store")
     # store.geometry("1200x600")
 
+    gemiddelde_prijs, mediaan_prijs, standaarddeviatie_prijs = prijs_statistieken()
+    prijs_statistiek = Label(master=store, text=f"Statistieken over prijs:\n\nGemiddelde prijs: ${gemiddelde_prijs}\nMediaan prijs: ${mediaan_prijs}\nStandaarddeviatie prijs: ${standaarddeviatie_prijs}")
+    prijs_statistiek.grid(column=0, row=2, padx=20, sticky="N")
+
+    sorted_genre_count = genre_frequentie()
+    genre_string = "Genres: \n\n"
+    count_string = "Count: \n\n"
+    for genre, count in sorted_genre_count.items():
+        genre_string += f"{genre}: \n"
+        count_string += f"{count} \n"
+
+    genre_lbl = Label(master=store, text=f"{genre_string}")
+    genre_lbl.grid(column=4, row=2, padx=20, sticky="N")
+
+    genre_count_lbl = Label(master=store, text=f"{count_string}")
+    genre_count_lbl.grid(column=5, row=2, padx=20, sticky="N")
+
     store_lbl = Label(master=store, text="Steam Store")
-    store_lbl.grid(column=0, columnspan=3, row=0, padx=400)
+    store_lbl.grid(column=1, columnspan=3, row=0)
 
     search_frame = Frame(master=store)
-    search_frame.grid(column=0, columnspan=3, row=1)
+    search_frame.grid(column=1, columnspan=3, row=1)
 
     search_lbl = Label(master=search_frame, text="Search: ")
     search_lbl.grid(column=0, row=0, sticky="W")
@@ -637,16 +696,16 @@ def store_gui():
     search_entry.bind("<Return>", search_game)
 
     games_frame = Frame(master=store)
-    games_frame.grid(column=0, columnspan=3, row=2)
+    games_frame.grid(column=1, columnspan=3, row=2)
 
     previous_button = Button(master=store, text="<", font=("", 15), command=previous_page)
-    previous_button.grid(column=0, row=3, pady=5, sticky="NESW")
+    previous_button.grid(column=1, row=3, pady=5, sticky="NESW")
 
     page_label = Label(master=store, text="Page 1")
-    page_label.grid(column=1, row=3)
+    page_label.grid(column=2, row=3)
 
     next_button = Button(master=store, text=">", font=("", 15), command=next_page)
-    next_button.grid(column=2, row=3, pady=5, sticky="NESW")
+    next_button.grid(column=3, row=3, pady=5, sticky="NESW")
 
     update_labels(games_frame, start, end)
 
@@ -659,7 +718,8 @@ def on_click(event):
     root1.title("Loading...")
     lbl_login.config(text="Loading...", font=("", 20))
     steamid_input.destroy()
-    confirm_btn.destroy()
+    continue_lbl.destroy()
+    # confirm_btn.destroy()
     root1.update()
 
     try:
@@ -676,7 +736,7 @@ def return_to_login():
     login()
 
 def login():
-    global steamid_input, root1, lbl_login, confirm_btn
+    global steamid_input, root1, lbl_login, continue_lbl#, confirm_btn
     root1 = Tk()
     root1.geometry("1200x600")
     root1.title("Login")
@@ -685,14 +745,16 @@ def login():
     lbl_login = Label(master=root1, text="What is your steam ID?", bg="#66c0f4")
     lbl_login.pack(pady=20)
 
-    steamid_input = Entry(master=root1)
+    steamid_input = Entry(master=root1, width=25)
     steamid_input.pack()
     steamid_input.bind("<Return>", on_click)
 
-    confirm_btn = Button(master=root1, text="Confirm", command=on_click)
-    confirm_btn.pack(pady=20)
+    continue_lbl = Label(master=root1, text="Press 'Enter' to continue")
+    continue_lbl.pack(pady=20)
+    # confirm_btn = Button(master=root1, text="Confirm", command=on_click)
+    # confirm_btn.pack(pady=20)
 
     root1.mainloop()
 
-login()
-# store_gui()
+# login()
+store_gui()
