@@ -190,68 +190,6 @@ def no_surprises():
     time.sleep(0.5)
     buzzer.deinit()
 
-    # buzzer = PWM(Pin(15))
-    # playtone(E5)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(G4)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(C5)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(G4)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(E3)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(E4)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(C5)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(G5)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    #
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(E5)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(G4)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(C5)
-    # time.sleep(0.5)
-    # buzzer.deinit()
-    #
-    # buzzer = PWM(Pin(15))
-    # playtone(G4)
-    # time.sleep(0.5)
-    # buzzer.deinit()
 def nokia():
     buzzer = PWM(Pin(15))
     playtone(E6)
@@ -404,21 +342,6 @@ def zelda():
     time.sleep(0.214)
     buzzer.deinit()
 
-    # buzzer = PWM(Pin(15))
-    # playtone(1319)
-    # time.sleep(0.214)
-    # buzzer.deinit()
-
-    # buzzer = PWM(Pin(15))
-    # playtone(1568)
-    # time.sleep(0.214)
-    # buzzer.deinit()
-
-    # buzzer = PWM(Pin(15))
-    # playtone(1319)
-    # time.sleep(0.857)
-    # buzzer.deinit()
-
 
 np = neopixel.NeoPixel(machine.Pin(13), 8)
 
@@ -469,7 +392,6 @@ nokia()
 
 
 def lcd_display(data, line):
-    # lcd.clear()
     if len(data) <= 16:
         lcd.move_to(0, line)
         lcd.putstr(data)
@@ -500,6 +422,7 @@ while True:
     lcd.clear()
     lcd_display(naam, 0)
     lcd.move_to(0, 1)
+    lcd.putstr("kanker")
 
     if data == "1":
         np[0] = [0, 0, 100]
