@@ -2,7 +2,9 @@ import json
 import requests
 from tkinter import *
 import datetime
-import threading
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from s_c import serial_communication, check_online, read_serial
 
 jort_ID = 76561198424424214
@@ -34,19 +36,74 @@ def binary_search(lst, target):  # binary search
             low = mid + 1
     return "No results..."
 
+def binary_search_substring(list, target_string):
+    target = target_string.lower()
+    index = 0
+    results = []
+    low, high = 0, len(list) - 1
+
+    while low <= high:
+        mid = (low + high) // 2
+        mid_word = list[mid]
+        if target in mid_word[index].lower()[0:len(target)]:
+
+            left = mid
+            while left >= 0 and target in list[left][index].lower():
+                results.append(list[left])
+                left -= 1
+
+            right = mid + 1
+            while right < len(list) and target in list[right][index].lower():
+                results.append(list[right])
+                right += 1
+
+            return results
+
+        elif target < mid_word[index].lower():
+            high = mid - 1
+        elif target > mid_word[index].lower():
+            low = mid + 1
+
+    return results
 
 """
 Sorteer functies
 """
+def quicksort_lst_with_tuples(lst):
+    index = 0
+    if len(lst) <= 1:
+        return lst
+    else:
+        pivot = lst[0]
+        lesser = []
+        greater = []
+        for x in lst[1:]:
+            if x[index].lower() <= pivot[index].lower():
+                lesser.append(x)
+            else:
+                greater.append(x)
+        return quicksort_lst_with_tuples(lesser) + [pivot] + quicksort_lst_with_tuples(greater)
 
-
-def sort_list(lst):  # sort function selection sort? (vgm is het bubble sort)
+def sort_list(lst):
     lst_sorted = lst.copy()
     gewisseld = True
     while gewisseld:
         gewisseld = False
         for i in range(0, len(lst_sorted) - 1):
             if lst_sorted[i] > lst_sorted[i + 1]:
+                lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
+                gewisseld = True
+            else:
+                continue
+    return lst_sorted
+
+def sort_list_with_tuples(lst):
+    lst_sorted = lst.copy()
+    gewisseld = True
+    while gewisseld:
+        gewisseld = False
+        for i in range(0, len(lst_sorted) - 1):
+            if lst_sorted[i][0] > lst_sorted[i + 1][0]:
                 lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
                 gewisseld = True
             else:
@@ -78,7 +135,6 @@ def sort_list_with_dicts_by_onlinstatus(lst, button_state):
                     continue
         return lst_sorted
     else:
-        "online, away, snooze, offline"
         index = 1
         lst_sorted = lst.copy()
         gewisseld = True
@@ -102,7 +158,6 @@ def sort_list_with_dicts_by_onlinstatus(lst, button_state):
         return lst_sorted
 
 def sort_list_with_dicts(lst, button_state):
-    # if button_state == 0:
     index = 0
     lst_sorted = lst.copy()
     gewisseld = True
@@ -118,18 +173,6 @@ def sort_list_with_dicts(lst, button_state):
                     lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
                     gewisseld = True
     return lst_sorted
-    # else:
-    #     index = 0
-    #     lst_sorted = lst.copy()
-    #     gewisseld = True
-    #     while gewisseld:
-    #         gewisseld = False
-    #         for i in range(0, len(lst_sorted) - 1):
-    #             if list(lst_sorted[i].values())[index].lower() < list(lst_sorted[i + 1].values())[index].lower():
-    #                 lst_sorted[i], lst_sorted[i + 1] = lst_sorted[i + 1], lst_sorted[i]
-    #                 gewisseld = True
-    #     return lst_sorted
-
 
 def sort_dict_on_values(input_dict):
     items = list(input_dict.items())
@@ -143,6 +186,68 @@ def sort_dict_on_values(input_dict):
     dict_sorted = dict(items)
     return dict_sorted
 
+def calculate_sse(a, b, X, y):
+    n = len(y)
+    predictions = [a + b * xi for xi in X]
+    sse = sum((predictions[i] - y[i]) ** 2 for i in range(n))
+    return sse
+
+
+def gradient_descent(X, y, learning_rate, epochs):
+    a = 0
+    b = 0
+    m = len(y)
+
+    for epoch in range(epochs):
+        predictions = [a + b * xi for xi in X]
+        errors = [predictions[i] - y[i] for i in range(m)]
+
+        a -= learning_rate * (1/m) * sum(errors)
+        b -= learning_rate * (1/m) * sum(errors[i] * X[i] for i in range(m))
+
+    return a, b
+
+def linear_regression():
+    price_list = []
+    average_playtime_list = []
+    with open('steam.json', 'r') as file:
+        data = json.load(file)
+    for i, game in enumerate(data):
+        price = data[i]['price']
+        average_playtime = data[i]['average_playtime']
+        price_list.append(price)
+        average_playtime_list.append(average_playtime)
+
+    X = price_list
+    y = average_playtime_list
+
+    learning_rate = 0.01
+    epochs = 1000
+
+    a, b = gradient_descent(X, y, learning_rate, epochs)
+
+    predicted_values = [a + b * xi for xi in X]
+
+    sse = calculate_sse(a, b, X, y)
+
+    fig, ax = plt.subplots(figsize=(4, 2), facecolor='blue')
+    plt.scatter(X, y, label='Actual values', s=5)
+    plt.plot(X, predicted_values, color='red', label='Predicted values')
+    plt.xlabel('Price ($)', fontsize=8)
+    plt.ylabel('Average playtime (minutes)', fontsize=8)
+
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
+
+    plt.legend(fontsize=6)
+    plt.title(f'Linear Regression\nSSE: {sse:.2f}', fontsize=10)
+    plt.subplots_adjust(left=0.2, right=0.8, top=0.8, bottom=0.2)
+
+    graph_btn.destroy()
+
+    canvas = FigureCanvasTkAgg(fig, master=store)
+    canvas_widget = canvas.get_tk_widget()
+    canvas_widget.grid(column=0, row=2, padx=10, pady=10)
 
 """
 Get json file functies / api
@@ -312,7 +417,6 @@ def sort_gui_friendlist_by_name():
         personaname = friend['personaname']
         onlinestatus = friend['onlinestatus']
         listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
-    # listbox_friends.grid(column=0, columnspan=2, row=3)
 
 def sort_gui_friendlist_by_status():
     listbox_friends.delete(0, END)
@@ -337,7 +441,6 @@ def friend_gui(event):
         selected_item = listbox_friends.get(selected_index)
         print(f"Double-clicked on item: {selected_item}")
         username_friend, status_friend = str(selected_item).split(' - ')
-        # print(friend_info_list)
         for i in range(0, len(friend_info_list)):
             if friend_info_list[i]['personaname'] == username_friend:
                 clickedfriend_dict = friend_info_list[i]
@@ -378,21 +481,30 @@ def friend_gui(event):
                 listbox_recentgames_friend.insert(END, f"{game}")
             listbox_recentgames_friend.grid(row=2, column=0, columnspan=2)
 
-
         root_friend.mainloop()
 
+def on_click_refresh(steamid):
+    refresh_friendlist.config(text="Loading...")
+    update_friendlist(steamid)
 
-def main_gui(steamid):
-    global friend_info_list, listbox_friends, btn_asc_desc, button_state
-    # global listbox_friends
-    # global btn_asc_desc
-    # global button_state
+def update_friendlist(steamid):
+    global friend_info_list
+    refresh_friendlist.config(text="Refresh")
+    listbox_friends.delete(0, END)
+    friend_info_list = get_friend_info(steamid)
+    sorted_friendlist = sort_list_with_dicts_by_onlinstatus(friend_info_list, button_state)
+    for friend in sorted_friendlist:
+        personaname = friend['personaname']
+        onlinestatus = friend['onlinestatus']
+        listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
+
+def main_gui(steamid, personaname):
+    global listbox_friends, btn_asc_desc, button_state, refresh_friendlist, friend_info_list
     button_state = 0
     root2 = Tk()
 
     root2.geometry("1200x600")
     root2.title("Main screen")
-    personaname = get_personaname(steamid)
 
     lbl = Label(master=root2, text=f"Welcome {personaname}", anchor='center')
     lbl.grid(column=1, row=0)
@@ -402,9 +514,6 @@ def main_gui(steamid):
 
     btn_asc_desc = Button(master=root2, text="Ascending", command=asc_desc)
     btn_asc_desc.grid(column=0, row=2, sticky="NESW")
-    # checkbox_state = BooleanVar()
-    # checkbox = Checkbutton(master=root2, text="Descending", variable=checkbox_state, command=functie)
-    # checkbox.grid(column=1, row=2, sticky="NESW")
 
     btn_sort_name = Button(master=root2, text="Sort by name", command=sort_gui_friendlist_by_name)
     btn_sort_name.grid(column=1, row=2, sticky="NESW")
@@ -412,18 +521,11 @@ def main_gui(steamid):
     btn_sort_name = Button(master=root2, text="Sort by status", command=sort_gui_friendlist_by_status)
     btn_sort_name.grid(column=2, row=2, sticky="NESW")
 
-    listbox_friends = Listbox(master=root2, selectmode=SINGLE, height=30, width=65)
-    # scrollbar = Scrollbar(root2, command=listbox_friends.yview)
-    # scrollbar.pack(side=RIGHT, fill=Y)
-    #
-    # listbox_friends.config(yscrollcommand=scrollbar.set)
+    refresh_friendlist = Button(master=root2, text="Load Friendlist", command=lambda: on_click_refresh(steamid))
+    refresh_friendlist.grid(column=2, row=1, stick="NESW")
 
-    friend_info_list = get_friend_info(steamid)
-    sorted_friendlist = sort_list_with_dicts_by_onlinstatus(friend_info_list, button_state)
-    for friend in sorted_friendlist:
-        personaname = friend['personaname']
-        onlinestatus = friend['onlinestatus']
-        listbox_friends.insert(END, f"{personaname} - {onlinestatus}")
+    friend_info_list = []
+    listbox_friends = Listbox(master=root2, selectmode=SINGLE, height=30, width=65)
     listbox_friends.grid(column=0, columnspan=3, row=3)
 
     listbox_friends.bind("<Double-Button-1>", friend_gui)
@@ -448,7 +550,6 @@ def main_gui(steamid):
 def create_gamelist():
     with open('steam.json', 'r') as file:
         data = json.load(file)
-    # print(json.dumps(data, indent=2))
     all_games = []
     for i, game in enumerate(data):
         game_name = data[i]['name']
@@ -471,10 +572,21 @@ def update_labels(games_frame, start, end):
         game_name_lbl = Label(master=games_frame, text=f"{game[0]}")
         game_name_lbl.grid(column=0, row=i, pady=3, sticky='W')
     for i, game in enumerate(all_games[start:end]):
-        game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
+        if game[2] == 0.0:
+            game_name_lbl = Label(master=games_frame, text=f"Free to play")
+        else:
+            game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
         game_name_lbl.grid(column=1, row=i, pady=3, padx=30, sticky='W')
+
     for i, game in enumerate(all_games[start:end]):
-        game_name_lbl = Label(master=games_frame, text=f"Genre: {game[4]}")
+        genres = game[5].split(";")
+        genre_string = "Genre: "
+        for j, genre in enumerate(genres):
+            if j == 0:
+                genre_string += genre
+            else:
+                genre_string += f", {genre}"
+        game_name_lbl = Label(master=games_frame, text=genre_string)
         game_name_lbl.grid(column=2, row=i, pady=3, sticky='W')
 
 def next_page():
@@ -486,63 +598,181 @@ def next_page():
 
 def previous_page():
     global start, end
-    start -= 20
-    end -= 20
-    update_labels(games_frame, start, end)
-    update_page_label()
+    if start >= 20:
+        start -= 20
+        end -= 20
+        update_labels(games_frame, start, end)
+        update_page_label()
 
 def update_page_label():
-    page_label.config(text=f"Page {start // 15 + 1}")
+    page_label.config(text=f"Page {start // 20 + 1}")
+
+def search_game(event):
+    target_string = search_entry.get()
+    if target_string == "":
+        update_labels(games_frame, start, end)
+    else:
+        results = binary_search_substring(quicksort_lst_with_tuples(create_gamelist()), target_string)
+        for label in games_frame.winfo_children():
+            label.destroy()
+        if results == []:
+            game_name_lbl = Label(master=games_frame, text="No results found...")
+            game_name_lbl.grid(column=0, row=0, pady=3, sticky='W')
+        else:
+            for i, game in enumerate(results[:20]):
+                game_name_lbl = Label(master=games_frame, text=f"{game[0]}")
+                game_name_lbl.grid(column=0, row=i, pady=3, sticky='W')
+            for i, game in enumerate(results[:20]):
+                if game[2] == 0.0:
+                    game_name_lbl = Label(master=games_frame, text=f"Free to play")
+                else:
+                    game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
+                game_name_lbl.grid(column=1, row=i, pady=3, padx=30, sticky='W')
+
+            for i, game in enumerate(results[:20]):
+                genres = game[5].split(";")
+                genre_string = "Genre: "
+                for j, genre in enumerate(genres):
+                    if j == 0:
+                        genre_string += genre
+                    else:
+                        genre_string += f", {genre}"
+                game_name_lbl = Label(master=games_frame, text=genre_string)
+                game_name_lbl.grid(column=2, row=i, pady=3, sticky='W')
+
+def prijs_statistieken():
+    all_prices = []
+    with open('steam.json', 'r') as file:
+        data = json.load(file)
+    for i, game in enumerate(data):
+        price = data[i]['price']
+        all_prices.append(price)
+
+    data = {'Price': all_prices}
+    df = pd.DataFrame(data)
+
+    gemiddelde_prijs = df['Price'].mean()
+    mediaan_prijs = df['Price'].median()
+    standaarddeviatie_prijs = df['Price'].std()
+
+    return gemiddelde_prijs.round(2), mediaan_prijs.round(2), standaarddeviatie_prijs.round(2)
+
+def genre_frequentie():
+    all_genres = []
+    all_genres_count = {}
+    with open('steam.json', 'r') as file:
+        data = json.load(file)
+    for i, game in enumerate(data):
+        game_genres = data[i]['genres']
+        game_genre = game_genres.split(";")
+        for genre in game_genre:
+            all_genres.append(genre)
+
+    for genre in all_genres:
+        if genre in all_genres_count:
+            all_genres_count[genre] += 1
+        else:
+            all_genres_count[genre] = 1
+    sorted_genre_count = sort_dict_on_values(all_genres_count)
+    return sorted_genre_count
 
 def store_gui():
-    global start, end, games_frame, page_label
+    global start, end, games_frame, page_label, search_entry, graph_btn, store
     start = 0
     end = 20
 
     store = Tk()
     store.title("Steam Store")
-    # store.geometry("1200x600")
+
+    gemiddelde_prijs, mediaan_prijs, standaarddeviatie_prijs = prijs_statistieken()
+    prijs_statistiek = Label(master=store, text=f"Statistieken over prijs:\n\nGemiddelde prijs: ${gemiddelde_prijs}\nMediaan prijs: ${mediaan_prijs}\nStandaarddeviatie prijs: ${standaarddeviatie_prijs}")
+    prijs_statistiek.grid(column=0, row=3, padx=20, sticky="N")
+
+    sorted_genre_count = genre_frequentie()
+    genre_string = "Genres: \n\n"
+    count_string = "Count: \n\n"
+    for genre, count in sorted_genre_count.items():
+        genre_string += f"{genre}: \n"
+        count_string += f"{count} \n"
+
+    genre_lbl = Label(master=store, text=f"{genre_string}")
+    genre_lbl.grid(column=4, row=2, padx=20, rowspan=2, sticky="N")
+
+    genre_count_lbl = Label(master=store, text=f"{count_string}")
+    genre_count_lbl.grid(column=5, row=2, padx=20, rowspan=2, sticky="N")
+
+    graph_btn = Button(master=store, text=f"Plot graph", command=linear_regression)
+    graph_btn.grid(column=0, row=2, padx=20, sticky="N")
+
+    store_lbl = Label(master=store, text="Steam Store")
+    store_lbl.grid(column=1, columnspan=3, row=0)
+
+    search_frame = Frame(master=store)
+    search_frame.grid(column=1, columnspan=3, row=1)
+
+    search_lbl = Label(master=search_frame, text="Search: ")
+    search_lbl.grid(column=0, row=0, sticky="W")
+
+    search_entry = Entry(master=search_frame, width=50)
+    search_entry.grid(column=1, row=0, columnspan=2, sticky="W")
+    search_entry.bind("<Return>", search_game)
 
     games_frame = Frame(master=store)
-    games_frame.grid(column=0, columnspan=3, row=0, padx=100)
+    games_frame.grid(column=1, columnspan=3, row=2, rowspan=2)
 
     previous_button = Button(master=store, text="<", font=("", 15), command=previous_page)
-    previous_button.grid(column=0, row=1, pady=5, sticky="NESW")
+    previous_button.grid(column=1, row=4, pady=5, sticky="NESW")
 
     page_label = Label(master=store, text="Page 1")
-    page_label.grid(column=1, row=1)
+    page_label.grid(column=2, row=4)
 
     next_button = Button(master=store, text=">", font=("", 15), command=next_page)
-    next_button.grid(column=2, row=1, pady=5, sticky="NESW")
+    next_button.grid(column=3, row=4, pady=5, sticky="NESW")
 
     update_labels(games_frame, start, end)
 
     store.mainloop()
 
-
-def on_click():
+def on_click(event):
     steamid = steamid_input.get()
 
     root1.title("Loading...")
-    lbl1.config(text="Loading...", font=("", 20))
+    lbl_login.config(text="Loading...", font=("", 20))
     steamid_input.destroy()
-    confirm_btn.destroy()
+    continue_lbl.destroy()
     root1.update()
-    main_gui(steamid)
 
+    try:
+        personaname = get_personaname(steamid)
+        main_gui(steamid, personaname)
+    except:
+        root1.title("Error")
+        lbl_login.config(text="Error\nSteam ID does not exist", font=("", 20))
+        return_btn = Button(master=root1, text="Return to login", command=return_to_login)
+        return_btn.pack()
 
-root1 = Tk()
-root1.geometry("1200x600")
-root1.title("Login")
-root1.configure(bg="#1b2838")
+def return_to_login():
+    root1.destroy()
+    login()
 
-lbl1 = Label(master=root1, text="What is your steam ID?", bg="#66c0f4")
-lbl1.pack(pady=20)
+def login():
+    global steamid_input, root1, lbl_login, continue_lbl
+    root1 = Tk()
+    root1.geometry("1200x600")
+    root1.title("Login")
+    root1.configure(bg="#1b2838")
 
-steamid_input = Entry(master=root1)
-steamid_input.pack()
+    lbl_login = Label(master=root1, text="What is your steam ID?", bg="#66c0f4")
+    lbl_login.pack(pady=20)
 
-confirm_btn = Button(master=root1, text="Confirm", command=on_click)
-confirm_btn.pack(pady=20)
+    steamid_input = Entry(master=root1, width=25)
+    steamid_input.pack()
+    steamid_input.bind("<Return>", on_click)
 
-root1.mainloop()
+    continue_lbl = Label(master=root1, text="Press 'Enter' to continue")
+    continue_lbl.pack(pady=20)
+
+    root1.mainloop()
+
+login()
+# store_gui()
