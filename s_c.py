@@ -80,16 +80,16 @@ def serial_communication(friend_steamid_sc):
 
                 if choice != 'exit':
                     # data = list(check_online(choice)+ "-" + personaname + "-" + game_playing + "\r")
-                    data = check_online(choice) + "Hallo_docent_dit_is_onze_seperator_<3" + personaname + "Hallo_docent_dit_is_onze_seperator_<3" + game_playing + "Hallo_docent_dit_is_onze_seperator_<3" + "\r"
+                    data = check_online(choice) + "ewigvuieflbhwuidbhiudgbwlhg" + personaname + "ewigvuieflbhwuidbhiudgbwlhg" + game_playing + "\r"
                     print(f"data in = {data}")
                     serial_port.write(data.encode())
                     pico_output = read_serial(serial_port)
                     pico_output = pico_output.replace('\r\n', ' ')
                     print("[PICO] " + pico_output)
                     break
-                elif choice == 'exit':
-                    # Exit user input loop
-                    break
+                # elif choice == 'exit':
+                #     # Exit user input loop
+                #     break
                 else:
                     print("[WARN] Unknown command.")
 
