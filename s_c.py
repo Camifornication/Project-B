@@ -1,16 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Oriëntatie op TI
-
-Voorbeeld voor communicatie met Raspberry Pi Pico. Flash `main.py` in de folder serial/pico/
-naar de Raspberry Pi Pico en start dit bestand op je laptop/PC.
-
-(c) 2022 Hogeschool Utrecht,
-Hagen Patzke (hagen.patzke@hu.nl) en
-Tijmen Muller (tijmen.muller@hu.nl)
-"""
-
 from serial.tools import list_ports
 import serial
 import requests
@@ -18,7 +5,6 @@ import requests
 steam_api_key = "61D1D964724B68FC9F340D584CD500E3"
 
 def read_serial(port):
-    """Read data from serial port and return as string."""
     line = port.read(1000)
     print(line)
     return line.decode()
@@ -43,8 +29,6 @@ def check_online(steamid):
             online_status = "0" #"Offline"
         elif personastate == 1:
             online_status = "1" #"Online"
-        # elif personastate == 2:
-        #     online_status = "Do Not Disturb"
         elif personastate == 3:
             online_status = "2" #"Away"
         elif personastate == 4:
@@ -71,15 +55,10 @@ def serial_communication(friend_steamid_sc):
             serial_port.open()
 
         try:
-            # Request user input
             commands = ['exit', 'online status']
             choice = friend_steamid_sc
             while True:
-
-
-
                 if choice != 'exit':
-                    # data = list(check_online(choice)+ "-" + personaname + "-" + game_playing + "\r")
                     data = check_online(choice) + "ewigvuieflbhwuidbhiudgbwlhg" + personaname + "ewigvuieflbhwuidbhiudgbwlhg" + game_playing + "\r"
                     print(f"data in = {data}")
                     serial_port.write(data.encode())
@@ -87,17 +66,11 @@ def serial_communication(friend_steamid_sc):
                     pico_output = pico_output.replace('\r\n', ' ')
                     print("[PICO] " + pico_output)
                     break
-                # elif choice == 'exit':
-                #     # Exit user input loop
-                #     break
                 else:
                     print("[WARN] Unknown command.")
 
         except KeyboardInterrupt:
             print("[INFO] Ctrl+C detected. Terminating.")
         finally:
-            # Close connection to Pico
             serial_port.close()
             print("[INFO] Serial port closed. Bye.")
-
-# serial_communication(input("Command? [" + ", ".join(commands) + "] "))

@@ -485,6 +485,9 @@ def friend_gui(event):
             for game in friend_recent_games_list:
                 listbox_recentgames_friend.insert(END, f"{game}")
             listbox_recentgames_friend.grid(row=2, column=0, columnspan=2)
+        else:
+            placeholderlbl = Label(bg=dark_blue, height=15, width=50, text="No recently played games", fg=light_blue, font=('', 10, "bold"))
+            placeholderlbl.grid(row=2, column=0, columnspan=2)
 
         root_friend.mainloop()
 
