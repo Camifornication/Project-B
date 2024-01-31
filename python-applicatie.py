@@ -17,6 +17,12 @@ chris_ID = 76561199055661530
 steam_api_key = "61D1D964724B68FC9F340D584CD500E3"
 user_id = "76561198424424214"
 
+blackish_blue = "#171a21"
+light_blue = "#66c0f4"
+darker_blue = "#1b2838"
+dark_blue = "#2a475e"
+grey = "#c7d5e0"
+
 """
 Zoek functies
 """
@@ -230,17 +236,20 @@ def linear_regression():
 
     sse = calculate_sse(a, b, X, y)
 
-    fig, ax = plt.subplots(figsize=(4, 2), facecolor='blue')
+    fig, ax = plt.subplots(figsize=(4, 2), facecolor=darker_blue)
     plt.scatter(X, y, label='Actual values', s=5)
     plt.plot(X, predicted_values, color='red', label='Predicted values')
-    plt.xlabel('Price ($)', fontsize=8)
-    plt.ylabel('Average playtime (minutes)', fontsize=8)
+    plt.xlabel('Price ($)', fontsize=8, color=grey)
+    plt.ylabel('Average playtime (minutes)', fontsize=8, color=grey)
 
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
+    plt.xticks(fontsize=8, color=grey)
+    plt.yticks(fontsize=8, color=grey)
+
+    ax.tick_params(axis="x", color=grey)
+    ax.tick_params(axis="y", color=grey)
 
     plt.legend(fontsize=6)
-    plt.title(f'Linear Regression\nSSE: {sse:.2f}', fontsize=10)
+    plt.title(f'Playtime and price graph', fontsize=10, color=grey)
     plt.subplots_adjust(left=0.2, right=0.8, top=0.8, bottom=0.2)
 
     graph_btn.destroy()
@@ -345,7 +354,6 @@ def GetSteamLevel(steamid):
     response = requests.get(
         f"https://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key={steam_api_key}&steamid={steamid}")
     data = response.json()
-    print(data)
     if "player_level" in data['response']:
         friend_lvl = str(data["response"]["player_level"])
         return friend_lvl
@@ -439,12 +447,10 @@ def friend_gui(event):
     selected_index = listbox_friends.nearest(event.y)
     if selected_index is not None:
         selected_item = listbox_friends.get(selected_index)
-        print(f"Double-clicked on item: {selected_item}")
         username_friend, status_friend = str(selected_item).split(' - ')
         for i in range(0, len(friend_info_list)):
             if friend_info_list[i]['personaname'] == username_friend:
                 clickedfriend_dict = friend_info_list[i]
-                print(friend_info_list[i])
                 break
 
         steamid = clickedfriend_dict["friendsteamid"]
@@ -454,18 +460,18 @@ def friend_gui(event):
         root_friend = Tk()
 
         root_friend.title("Friend")
-        root_friend.geometry("400x500")
+        root_friend.configure(bg=darker_blue)
 
-        friendnamelbl = Label(root_friend, text=f"{username_friend}")
+        friendnamelbl = Label(root_friend, text=f"{username_friend}", fg=light_blue, bg=darker_blue, font=('', 10, "bold"))
         friendnamelbl.grid(row=0, column=0)
 
-        friendcountrylbl = Label(root_friend, text=f"{countrycode}")
+        friendcountrylbl = Label(root_friend, text=f"{countrycode}", fg=light_blue, bg=darker_blue, font=('', 10, "bold"))
         friendcountrylbl.grid(row=1, column=0)
 
         TI_button = Button(root_friend, text="Refresh status on lcd", command=lambda: serial_communication(steamid))
         TI_button.grid(row=1, column=1)
 
-        friendlevellbl = Label(root_friend, text=f"level {friend_lvl}")
+        friendlevellbl = Label(root_friend, text=f"level {friend_lvl}", fg=light_blue, bg=darker_blue, font=('', 10, "bold"))
         friendlevellbl.grid(row=0, column=1)
 
         friend_recent_games_list = []
@@ -473,9 +479,8 @@ def friend_gui(event):
             f"https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={steam_api_key}&steamid={steamid}&count=10")
         data = response.json()
         if 'games' in data['response']:
-            listbox_recentgames_friend = Listbox(root_friend, selectmode=SINGLE, height=30, width=65)
+            listbox_recentgames_friend = Listbox(root_friend, selectmode=SINGLE, height=15, width=50, fg=grey, bg=dark_blue, font=('', 10, "bold"))
             for game in data['response']['games']:
-                print(game)
                 friend_recent_games_list.append(game['name'])
             for game in friend_recent_games_list:
                 listbox_recentgames_friend.insert(END, f"{game}")
@@ -503,14 +508,15 @@ def main_gui(steamid, personaname):
     button_state = 0
     root2 = Tk()
 
-    root2.geometry("1200x600")
+    root2.geometry("800x600")
     root2.title("Main screen")
+    root2.configure(bg=dark_blue)
 
-    lbl = Label(master=root2, text=f"Welcome {personaname}", anchor='center')
+    lbl = Label(master=root2, text=f"Welcome {personaname}", anchor='center', bg=dark_blue, fg=grey, font=('', 10, "bold"))
     lbl.grid(column=1, row=0)
 
     lbl2 = Label(master=root2, text=f"friendlist")
-    lbl2.grid(column=0, columnspan=2, row=1)
+    lbl2.grid(column=0, columnspan=2, row=1, sticky="NESW")
 
     btn_asc_desc = Button(master=root2, text="Ascending", command=asc_desc)
     btn_asc_desc.grid(column=0, row=2, sticky="NESW")
@@ -525,20 +531,20 @@ def main_gui(steamid, personaname):
     refresh_friendlist.grid(column=2, row=1, stick="NESW")
 
     friend_info_list = []
-    listbox_friends = Listbox(master=root2, selectmode=SINGLE, height=30, width=65)
+    listbox_friends = Listbox(master=root2, selectmode=SINGLE, height=30, width=65, bg=darker_blue, fg=grey, font=('', 10, "bold"))
     listbox_friends.grid(column=0, columnspan=3, row=3)
 
     listbox_friends.bind("<Double-Button-1>", friend_gui)
 
-    lbl_friendsareplaying = Label(master=root2, text="Friends are playing:")
+    lbl_friendsareplaying = Label(master=root2, text="Friends are playing:", bg=dark_blue, fg=grey, font=('', 10, "bold"))
     lbl_friendsareplaying.grid(column=3, row=1)
 
-    listbox_friend_games = Listbox(master=root2, selectmode=SINGLE, height=5, width=65)
+    listbox_friend_games = Listbox(master=root2, selectmode=SINGLE, height=5, width=45, bg=darker_blue, fg=grey, font=('', 10, "bold"))
     recent_games_count = get_friends_recent_games(steamid)
     recent_games_sorted = list(sort_dict_on_values(recent_games_count).keys())[:5]
     for game in recent_games_sorted:
         listbox_friend_games.insert(END, game)
-    listbox_friend_games.grid(column=3, row=3, sticky="N")
+    listbox_friend_games.grid(column=3, row=3, sticky="N", padx=5)
 
     open_store = Button(master=root2, text="Open Store", command=store_gui)
     open_store.grid(column=0, row=0, sticky="W")
@@ -569,13 +575,13 @@ def update_labels(games_frame, start, end):
 
     all_games = create_gamelist()
     for i, game in enumerate(all_games[start:end]):
-        game_name_lbl = Label(master=games_frame, text=f"{game[0]}")
+        game_name_lbl = Label(master=games_frame, text=f"{game[0]}", fg=grey, bg=dark_blue)
         game_name_lbl.grid(column=0, row=i, pady=3, sticky='W')
     for i, game in enumerate(all_games[start:end]):
         if game[2] == 0.0:
-            game_name_lbl = Label(master=games_frame, text=f"Free to play")
+            game_name_lbl = Label(master=games_frame, text=f"Free to play", fg=grey, bg=dark_blue)
         else:
-            game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$")
+            game_name_lbl = Label(master=games_frame, text=f"Price: {game[2]}$", fg=grey, bg=dark_blue)
         game_name_lbl.grid(column=1, row=i, pady=3, padx=30, sticky='W')
 
     for i, game in enumerate(all_games[start:end]):
@@ -586,7 +592,7 @@ def update_labels(games_frame, start, end):
                 genre_string += genre
             else:
                 genre_string += f", {genre}"
-        game_name_lbl = Label(master=games_frame, text=genre_string)
+        game_name_lbl = Label(master=games_frame, text=genre_string, fg=grey, bg=dark_blue)
         game_name_lbl.grid(column=2, row=i, pady=3, sticky='W')
 
 def next_page():
@@ -683,9 +689,10 @@ def store_gui():
 
     store = Tk()
     store.title("Steam Store")
+    store.configure(bg=darker_blue)
 
     gemiddelde_prijs, mediaan_prijs, standaarddeviatie_prijs = prijs_statistieken()
-    prijs_statistiek = Label(master=store, text=f"Statistieken over prijs:\n\nGemiddelde prijs: ${gemiddelde_prijs}\nMediaan prijs: ${mediaan_prijs}\nStandaarddeviatie prijs: ${standaarddeviatie_prijs}")
+    prijs_statistiek = Label(master=store, text=f"Statistieken over prijs:\n\nGemiddelde prijs: ${gemiddelde_prijs}\nMediaan prijs: ${mediaan_prijs}\nStandaarddeviatie prijs: ${standaarddeviatie_prijs}", fg=grey, bg=darker_blue)
     prijs_statistiek.grid(column=0, row=3, padx=20, sticky="N")
 
     sorted_genre_count = genre_frequentie()
@@ -695,35 +702,35 @@ def store_gui():
         genre_string += f"{genre}: \n"
         count_string += f"{count} \n"
 
-    genre_lbl = Label(master=store, text=f"{genre_string}")
+    genre_lbl = Label(master=store, text=f"{genre_string}", fg=grey, bg=darker_blue)
     genre_lbl.grid(column=4, row=2, padx=20, rowspan=2, sticky="N")
 
-    genre_count_lbl = Label(master=store, text=f"{count_string}")
+    genre_count_lbl = Label(master=store, text=f"{count_string}", fg=grey, bg=darker_blue)
     genre_count_lbl.grid(column=5, row=2, padx=20, rowspan=2, sticky="N")
 
     graph_btn = Button(master=store, text=f"Plot graph", command=linear_regression)
     graph_btn.grid(column=0, row=2, padx=20, sticky="N")
 
-    store_lbl = Label(master=store, text="Steam Store")
+    store_lbl = Label(master=store, text="Steam Store", fg=grey, bg=darker_blue)
     store_lbl.grid(column=1, columnspan=3, row=0)
 
-    search_frame = Frame(master=store)
+    search_frame = Frame(master=store, bg=darker_blue)
     search_frame.grid(column=1, columnspan=3, row=1)
 
-    search_lbl = Label(master=search_frame, text="Search: ")
+    search_lbl = Label(master=search_frame, text="Search: ", fg=grey, bg=darker_blue)
     search_lbl.grid(column=0, row=0, sticky="W")
 
-    search_entry = Entry(master=search_frame, width=50)
+    search_entry = Entry(master=search_frame, width=50, bg=grey)
     search_entry.grid(column=1, row=0, columnspan=2, sticky="W")
     search_entry.bind("<Return>", search_game)
 
-    games_frame = Frame(master=store)
+    games_frame = Frame(master=store, bg=dark_blue)
     games_frame.grid(column=1, columnspan=3, row=2, rowspan=2)
 
     previous_button = Button(master=store, text="<", font=("", 15), command=previous_page)
     previous_button.grid(column=1, row=4, pady=5, sticky="NESW")
 
-    page_label = Label(master=store, text="Page 1")
+    page_label = Label(master=store, text="Page 1", fg=grey, bg=darker_blue)
     page_label.grid(column=2, row=4)
 
     next_button = Button(master=store, text=">", font=("", 15), command=next_page)
@@ -758,21 +765,20 @@ def return_to_login():
 def login():
     global steamid_input, root1, lbl_login, continue_lbl
     root1 = Tk()
-    root1.geometry("1200x600")
+    root1.geometry("800x400")
     root1.title("Login")
-    root1.configure(bg="#1b2838")
+    root1.configure(bg=darker_blue)
 
-    lbl_login = Label(master=root1, text="What is your steam ID?", bg="#66c0f4")
+    lbl_login = Label(master=root1, text="What is your steam ID?", fg=light_blue, bg=darker_blue)
     lbl_login.pack(pady=20)
 
     steamid_input = Entry(master=root1, width=25)
     steamid_input.pack()
     steamid_input.bind("<Return>", on_click)
 
-    continue_lbl = Label(master=root1, text="Press 'Enter' to continue")
+    continue_lbl = Label(master=root1, text="Press 'Enter' to continue",fg=light_blue, bg=darker_blue)
     continue_lbl.pack(pady=20)
 
     root1.mainloop()
 
 login()
-# store_gui()
